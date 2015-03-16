@@ -1,0 +1,24 @@
+<div class="row">
+  <div class="col-md-12">
+    <h1>All messages</h1>
+    <hr>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Title</th>
+          <th>&nbsp;</th>
+        </tr>
+      </thead>
+      <tbody>
+        <?php foreach ($posts as $post) : ?>
+          <tr>
+            <td><a href="/<?php echo $post['ID']; ?>"><?php echo $post['title']; ?></a></td>
+            <td style="width: 120px"><a href="/edit/<?php echo $post['ID']; ?>" class="btn btn-primary btn-xs">Edit</a>
+            <a href="/destroy/<?php echo $post['ID']; ?>" class="btn btn-warning btn-xs">Delete</a></td>
+          </tr>
+        <?php endforeach; ?>
+      </tbody>
+    </table>
+    <a href="/new" class="btn btn-success">New message</a>
+  </div>
+</div>

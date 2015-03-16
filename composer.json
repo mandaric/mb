@@ -1,0 +1,15 @@
+{
+    "name": "mladen/messageboard",
+    "description": "MessageBoard",
+    "require": {
+        "badphp/dispatch": "~8.0"
+    },
+    "license": "Open Source",
+    "authors": [
+        {
+            "name": "mandaric",
+            "email": "mladen.mandaric@gmail.com"
+        }
+    ],
+    "minimum-stability": "stable"
+}
