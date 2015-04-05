@@ -5,104 +5,146 @@ require_once 'vendor/autoload.php';
 
 # ------------------------------------------------------------------------------
 
-# Messages overview
-map('GET', '/', function ($db)
+/**
+ * 1. HTTP Method, GET or POST
+ * 2. URI, '/info'
+ * 3. Callback function that will be executed
+ */
+map('GET', '/info', function ()
 {
-  $query = "SELECT * FROM messages";
-  $result = $db->query($query);
-
-  $posts = [];
-
-  while ($post = $result->fetchArray())
-  {
-    array_push($posts, $post);
-  }
-
-  echo phtml('index', ['posts' => $posts], 'layout');
+    echo 'MessageBoard v1.0.0';
 });
 
-# View a single message
-map('GET', '/<id>', function($params, $db)
+/**
+ * Shows the overview of all the messages
+ */
+map('GET', '/', function (SQLite3 $db)
 {
-  $statement = $db->prepare("SELECT * FROM messages WHERE id = :id LIMIT 1");
-  $statement->bindValue(':id', $params['id']);
+    $query = "SELECT * FROM messages";
 
-  $result = $statement->execute();
+    $result = $db->query($query);
 
-  $post = $result->fetchArray();
+    $posts = [];
 
-  echo phtml('view', ['post' => $post], 'layout');
+    while ($post = $result->fetchArray())
+    {
+        array_push($posts, $post);
+    }
+
+    echo phtml('index', ['posts' => $posts], 'layout');
 });
 
-# New message form
+/**
+ * Get a message by ID and display the form
+ *
+ * Post id: 2
+ * Example: /edit/2
+ */
+map('GET', '/edit/<id>', function ($params, SQLite3 $db)
+{
+    $statement = $db->prepare("SELECT * FROM messages WHERE id = :id LIMIT 1");
+
+    $statement->bindValue(':id', $params['id']);
+
+    $result = $statement->execute();
+
+    $post = $result->fetchArray();
+
+    echo phtml('edit', [
+        'action' => sprintf('/edit/%d', $params['id']),
+        'post'   => $post
+    ], 'layout');
+});
+
+/**
+ * Show an empty form to create a new post
+ */
 map('GET', '/new', function ()
 {
-  echo phtml('new', ['action' => '/'], 'layout');
+    echo phtml('new', ['action' => '/'], 'layout');
 });
 
-# Save new message to database
-map('POST', '/', function ($db)
+/**
+ * Show a post by it's ID
+ *
+ * Post id: 2
+ * Example: /2
+ */
+map('GET', '/<id>', function ($params, SQLite3 $db)
 {
-  $statement = $db->prepare("INSERT INTO messages (title, content)
+    $statement = $db->prepare("SELECT * FROM messages WHERE id = :id LIMIT 1");
+
+    $statement->bindValue(':id', $params['id']);
+
+    $result = $statement->execute();
+
+    $post = $result->fetchArray();
+
+    echo phtml('view', ['post' => $post], 'layout');
+});
+
+/**
+ * Save the form data (posted data) into the database
+ */
+map('POST', '/', function (SQLite3 $db)
+{
+    $statement = $db->prepare("INSERT INTO messages (title, content)
     VALUES(:title, :content)");
 
-  $statement->bindValue(':title', $_POST['title']);
-  $statement->bindValue(':content', $_POST['content']);
+    $statement->bindValue(':title', $_POST['title']);
+    $statement->bindValue(':content', $_POST['content']);
 
-  $statement->execute();
+    $statement->execute();
 
-  return redirect('/');
+    redirect('/');
 });
 
-# Edit message form
-map('GET', '/edit/<id>', function ($params, $db)
+/**
+ * Show a form and pre-fill it with post data by ID
+ *
+ * Example: /edit/2
+ */
+map('POST', '/edit/<id>', function ($params, SQLite3 $db)
 {
-  $statement = $db->prepare("SELECT * FROM messages WHERE id = :id LIMIT 1");
-  $statement->bindValue(':id', $params['id']);
-
-  $result = $statement->execute();
-
-  $post = $result->fetchArray();
-
-  echo phtml('edit', [
-    'action' => '/edit/' + $params['id'],
-    'post'   => $post
-  ], 'layout');
-});
-
-# Save editted message to database
-map('POST', '/edit/<id>', function ($params, $db)
-{
-  $statement = $db->prepare("UPDATE messages
+    $statement = $db->prepare("UPDATE messages
     SET title = :title, content = :content
     WHERE id = :id");
 
-  $statement->bindValue(':title', $_POST['title']);
-  $statement->bindValue(':content', $_POST['content']);
-  $statement->bindValue(':id', $params['id']);
+    $statement->bindValue(':title', $_POST['title']);
+    $statement->bindValue(':content', $_POST['content']);
+    $statement->bindValue(':id', $params['id']);
 
-  $statement->execute();
+    $statement->execute();
 
-  return redirect('/');
+    redirect('/');
 });
 
-map('GET', '/destroy/<id>', function ($params, $db)
+/**
+ * Delete a post from the database by it's ID
+ *
+ * Example: /destroy/2
+ */
+map('GET', '/destroy/<id>', function ($params, SQLite3 $db)
 {
-  $statement = $db->prepare("DELETE FROM messages WHERE id = :id");
+    $statement = $db->prepare("DELETE FROM messages WHERE id = :id");
 
-  $statement->bindValue(':id', $params['id']);
+    $statement->bindValue(':id', $params['id']);
 
-  $statement->execute();
+    $statement->execute();
 
-  return redirect('/');
+    redirect('/');
 });
 
 # ------------------------------------------------------------------------------
 
-# Create the database object
+/**
+ * Create the database object
+ */
 $db = new SQLite3('mydb.sqlite3');
 
-# Create the messages table if it doesn't exist
+/**
+ * Create the messages table if it doesn't exist
+ */
 $query = "CREATE TABLE IF NOT EXISTS messages (
   ID INTEGER,
   title	TEXT,
@@ -110,12 +152,19 @@ $query = "CREATE TABLE IF NOT EXISTS messages (
   PRIMARY KEY(ID)
 );";
 
+/**
+ * Execute the above query
+ */
 $db->exec($query);
 
-# setup the config
+/**
+ * setup the config
+ */
 config([
-  'templates' => './views'
+    'templates' => './views'
 ]);
 
-# Start the application
+/**
+ * Start the application and attach the database to it
+ */
 dispatch($db);

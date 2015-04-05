@@ -2,6 +2,6 @@
   <div class="col-md-12">
     <h1>New message</h1>
     <hr>
-    <?php include __DIR__.'/form.phtml'; ?>
+    <?php echo phtml('form', ['action' => $action], false); ?>
   </div>
 </div>
